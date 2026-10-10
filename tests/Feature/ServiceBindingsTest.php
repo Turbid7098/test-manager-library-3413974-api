@@ -11,8 +11,10 @@ use App\Adapters\Outbound\Persistence\DatabaseTransactionManager;
 use App\Adapters\Outbound\Persistence\DatabaseUserRepository;
 use App\Adapters\Outbound\Security\JwtTokenService;
 use App\Adapters\Outbound\Security\LaravelPasswordHasher;
+use App\Adapters\Outbound\Storage\FilesystemCoverStorage;
 use Application\Ports\BookRepository;
 use Application\Ports\CategoryRepository;
+use Application\Ports\CoverStorage;
 use Application\Ports\IdGenerator;
 use Application\Ports\LoanRepository;
 use Application\Ports\MemberRepository;
@@ -36,6 +38,7 @@ final class ServiceBindingsTest extends TestCase
         self::assertInstanceOf(DatabaseLoanRepository::class, $this->app->make(LoanRepository::class));
         self::assertInstanceOf(DatabaseTransactionManager::class, $this->app->make(TransactionManager::class));
         self::assertInstanceOf(LaravelIdGenerator::class, $this->app->make(IdGenerator::class));
+        self::assertInstanceOf(FilesystemCoverStorage::class, $this->app->make(CoverStorage::class));
         self::assertInstanceOf(LaravelPasswordHasher::class, $this->app->make(PasswordHasher::class));
 
         $tokens = $this->app->make(JwtTokenService::class);

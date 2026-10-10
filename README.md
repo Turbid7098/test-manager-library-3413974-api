@@ -6,7 +6,7 @@ Backend de **Manager Library**, desarrollado con PHP y Laravel para la ficha SEN
 
 El dominio y los casos de uso de P3 están implementados en `src/Domain` y `src/Application`. Sus pruebas con fakes no requieren PostgreSQL ni servidor HTTP.
 
-La migración inicial, `GET /api/v1/health`, el login HTTP/JWT y los adaptadores PostgreSQL para libros, socios, usuarios, categorías y préstamos están implementados. El testigo de versión evita escrituras obsoletas y el checkout se verifica con dos procesos Laravel concurrentes contra PostgreSQL real. P2 sigue parcial hasta verificar un arranque desde un volumen vacío; las rutas HTTP de negocio y el contrato HTTP restante todavía están pendientes.
+La migración inicial, `GET /api/v1/health`, el login HTTP/JWT, los adaptadores PostgreSQL para libros, socios, usuarios, categorías y préstamos, y el almacenamiento privado de portadas están implementados. El checkout se verifica con dos procesos Laravel concurrentes contra PostgreSQL real; el adaptador de portadas valida las imágenes por contenido y permite hasta 2 MiB. P2 sigue parcial hasta verificar un arranque desde un volumen vacío; las rutas HTTP de negocio y el contrato HTTP restante todavía están pendientes.
 
 ## Pruebas del núcleo
 
