@@ -6,7 +6,7 @@ Backend de **Manager Library**, desarrollado con PHP y Laravel para la ficha SEN
 
 El dominio y los casos de uso de P3 están implementados en `src/Domain` y `src/Application`. Sus pruebas con fakes no requieren PostgreSQL ni servidor HTTP.
 
-La migración inicial, `GET /api/v1/health` y el aprovisionamiento del administrador están disponibles. El primer bloque de P4 agrega login HTTP con JWT, verificación Bearer y adaptadores de usuario/hash; se probó contra PostgreSQL en Compose. P2 sigue parcial hasta verificar un arranque desde un volumen vacío. Los adaptadores de persistencia restantes y las rutas de negocio todavía están pendientes.
+La migración inicial, `GET /api/v1/health`, el login HTTP/JWT y los adaptadores PostgreSQL para libros, socios, usuarios y categorías están implementados. Los adaptadores de libros y socios se prueban contra PostgreSQL real con transacciones revertidas. P2 sigue parcial hasta verificar un arranque desde un volumen vacío; el repositorio de préstamos, las rutas de negocio y el contrato HTTP restante todavía están pendientes.
 
 ## Pruebas del núcleo
 
@@ -19,7 +19,13 @@ $api = (Resolve-Path .).Path
 docker run --rm --mount "type=bind,source=$api,target=/app" --workdir /app php:8.3-cli php vendor/bin/phpunit tests/Unit/LendBooksServiceTest.php
 ```
 
-La prueba de P3 usa fakes en memoria. No demuestra persistencia PostgreSQL, contrato HTTP ni concurrencia real; esas evidencias requieren sus adaptadores e integración.
+Las pruebas de P3 usan fakes en memoria. Las pruebas de `tests/Integration` requieren el PostgreSQL real de Compose y revierten sus transacciones al terminar:
+
+```powershell
+docker compose exec api php artisan test --compact
+```
+
+El conjunto completo incluye pruebas unitarias, HTTP y de integración. No demuestra todavía el contrato completo de todas las rutas ni concurrencia de préstamos.
 
 ## Migración y administrador inicial
 
