@@ -13,6 +13,7 @@ use App\Adapters\Outbound\Persistence\DatabaseUserRepository;
 use App\Adapters\Outbound\Security\JwtTokenService;
 use App\Adapters\Outbound\Security\LaravelPasswordHasher;
 use App\Adapters\Outbound\Storage\FilesystemCoverStorage;
+use App\Adapters\Outbound\Time\LaravelClock;
 use Application\Ports\BookRepository;
 use Application\Ports\CategoryRepository;
 use Application\Ports\Clock;
@@ -45,16 +46,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CategoryRepository::class, DatabaseCategoryRepository::class);
         $this->app->singleton(PasswordHasher::class, LaravelPasswordHasher::class);
         $this->app->singleton(CoverStorage::class, FilesystemCoverStorage::class);
-        $this->app->singleton(JwtTokenService::class);
+        $this->app->scoped(JwtTokenService::class);
         $this->app->alias(JwtTokenService::class, TokenIssuer::class);
         $this->app->alias(JwtTokenService::class, TokenVerifier::class);
-        $this->app->singleton(Clock::class, static fn () => new class implements Clock
-        {
-            public function now(): \DateTimeImmutable
-            {
-                return new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-            }
-        });
+        $this->app->scoped(Clock::class, LaravelClock::class);
     }
 
     public function boot(): void {}
