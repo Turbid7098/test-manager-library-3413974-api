@@ -201,6 +201,11 @@ final class FakeCategories implements CategoryRepository
         return isset($this->records[$id]);
     }
 
+    public function findAllNames(): array
+    {
+        return $this->records;
+    }
+
     public function findNamesByIds(array $ids): array
     {
         return array_intersect_key($this->records, array_flip($ids));
@@ -222,6 +227,18 @@ final class FakeLoans implements LoanRepository
     public function findById(string $id): ?Loan
     {
         return $this->records[$id] ?? null;
+    }
+
+    public function search(
+        ?DateTimeImmutable $from,
+        ?DateTimeImmutable $to,
+        ?string $status,
+        ?string $memberId,
+        int $page,
+        int $size,
+        DateTimeImmutable $now
+    ): PageResult {
+        return new PageResult([], $page, $size, 0);
     }
 
     public function save(Loan $loan): void

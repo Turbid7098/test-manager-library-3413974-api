@@ -3,12 +3,24 @@
 namespace Application\Ports;
 
 use Application\DTO\OverdueLoanItem;
+use Application\DTO\PageResult;
 use DateTimeImmutable;
 use Domain\Entities\Loan;
 
 interface LoanRepository
 {
     public function findById(string $id): ?Loan;
+
+    /** @return PageResult<array{loan: Loan, status: string}> */
+    public function search(
+        ?DateTimeImmutable $from,
+        ?DateTimeImmutable $to,
+        ?string $status,
+        ?string $memberId,
+        int $page,
+        int $size,
+        DateTimeImmutable $now
+    ): PageResult;
 
     /** Persists a new loan or its item-return changes; there is no loan edit/delete operation. */
     public function save(Loan $loan): void;

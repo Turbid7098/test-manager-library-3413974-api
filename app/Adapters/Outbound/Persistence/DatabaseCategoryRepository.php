@@ -12,6 +12,14 @@ final class DatabaseCategoryRepository implements CategoryRepository
         return DB::table('library.category')->where('id', $id)->exists();
     }
 
+    public function findAllNames(): array
+    {
+        return DB::table('library.category')
+            ->orderBy('name')
+            ->pluck('name', 'id')
+            ->all();
+    }
+
     public function findNamesByIds(array $ids): array
     {
         if ($ids === []) {

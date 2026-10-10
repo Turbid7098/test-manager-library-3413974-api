@@ -3,11 +3,13 @@
 namespace App\Adapters\Outbound\Persistence;
 
 use Application\DTO\OverdueLoanItem;
+use Application\DTO\PageResult;
 use Application\Ports\LoanRepository;
 use DateTimeImmutable;
 use Domain\Entities\Loan;
 use Domain\Entities\LoanItem;
 use Domain\Exceptions\ConflictException;
+use Domain\Exceptions\NotFoundException;
 use Domain\ValueObjects\Isbn;
 use Illuminate\Support\Facades\DB;
 
@@ -34,6 +36,75 @@ final class DatabaseLoanRepository implements LoanRepository
             new DateTimeImmutable($record->loaned_at),
             $items
         );
+    }
+
+    public function search(
+        ?DateTimeImmutable $from,
+        ?DateTimeImmutable $to,
+        ?string $status,
+        ?string $memberId,
+        int $page,
+        int $size,
+        DateTimeImmutable $now
+    ): PageResult {
+        $loans = DB::table('library.loan as loan')
+            ->when(
+                $from !== null,
+                fn ($query) => $query->where('loan.loaned_at', '>=', $from->format('Y-m-d H:i:s.uP'))
+            )
+            ->when(
+                $to !== null,
+                fn ($query) => $query->where('loan.loaned_at', '<=', $to->format('Y-m-d H:i:s.uP'))
+            )
+            ->when($memberId !== null, fn ($query) => $query->where('loan.member_id', $memberId));
+
+        $nowValue = $now->format('Y-m-d H:i:s.uP');
+        if ($status === 'closed') {
+            $loans->whereNotExists(function ($query): void {
+                $query->selectRaw('1')
+                    ->from('library.loan_item as open_item')
+                    ->whereColumn('open_item.loan_id', 'loan.id')
+                    ->whereNull('open_item.returned_at');
+            });
+        } elseif ($status === 'overdue') {
+            $loans->whereExists(function ($query) use ($nowValue): void {
+                $query->selectRaw('1')
+                    ->from('library.loan_item as overdue_item')
+                    ->whereColumn('overdue_item.loan_id', 'loan.id')
+                    ->whereNull('overdue_item.returned_at')
+                    ->where('overdue_item.due_at', '<', $nowValue);
+            });
+        } elseif ($status === 'open') {
+            $loans->whereExists(function ($query): void {
+                $query->selectRaw('1')
+                    ->from('library.loan_item as active_item')
+                    ->whereColumn('active_item.loan_id', 'loan.id')
+                    ->whereNull('active_item.returned_at');
+            })->whereNotExists(function ($query) use ($nowValue): void {
+                $query->selectRaw('1')
+                    ->from('library.loan_item as overdue_item')
+                    ->whereColumn('overdue_item.loan_id', 'loan.id')
+                    ->whereNull('overdue_item.returned_at')
+                    ->where('overdue_item.due_at', '<', $nowValue);
+            });
+        }
+
+        $total = (clone $loans)->count();
+        $records = $loans
+            ->orderByDesc('loan.loaned_at')
+            ->orderBy('loan.id')
+            ->offset(($page - 1) * $size)
+            ->limit($size)
+            ->pluck('loan.id');
+        $items = [];
+        foreach ($records as $id) {
+            $loan = $this->findById($id);
+            if ($loan !== null) {
+                $items[] = ['loan' => $loan, 'status' => $loan->getStatus($now)];
+            }
+        }
+
+        return new PageResult($items, $page, $size, $total);
     }
 
     public function save(Loan $loan): void
@@ -73,7 +144,10 @@ final class DatabaseLoanRepository implements LoanRepository
                     ->where('loan_id', $loan->id)
                     ->value('returned_at');
                 if ($persisted === null) {
-                    throw new ConflictException('La línea del préstamo ya no existe.', 'LOAN_ITEM_NOT_FOUND');
+                    throw new NotFoundException('La línea del préstamo no existe.');
+                }
+                if (new DateTimeImmutable($persisted) != $returnedAt) {
+                    throw new ConflictException('La línea del préstamo ya fue devuelta.', 'ITEM_ALREADY_RETURNED');
                 }
             }
         }

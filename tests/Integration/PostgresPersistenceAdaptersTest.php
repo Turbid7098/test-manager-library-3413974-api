@@ -165,6 +165,10 @@ final class PostgresPersistenceAdaptersTest extends TestCase
             [self::CATEGORY_NOVEL => 'Novela'],
             $categories->findNamesByIds([self::CATEGORY_NOVEL, Str::uuid()->toString()])
         );
+        self::assertSame(
+            ['11111111-1111-4111-8111-111111111111' => 'Novela'],
+            array_intersect_key($categories->findAllNames(), [self::CATEGORY_NOVEL => true])
+        );
         self::assertSame([], $categories->findNamesByIds([]));
     }
 
