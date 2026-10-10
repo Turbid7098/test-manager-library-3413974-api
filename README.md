@@ -27,6 +27,8 @@ docker compose exec api php artisan test --compact
 
 El conjunto completo incluye pruebas unitarias, HTTP y de integración contra PostgreSQL real. El contrato HTTP verifica creación, consulta, actualización y baja de libros, miembros, préstamos, vencidos, reporte, portadas binarias, autenticación y permisos. La prueba concurrente de T-13 ejecuta procesos independientes y verifica que solo uno preste el último ejemplar.
 
+La verificación reproducible de T-17 (`tests/Integration/Fixtures/verify_empty_database_bootstrap.php`) exige una base PostgreSQL recién creada y valores de entorno `DB_DATABASE`, `ADMIN_USERNAME` y `ADMIN_PASSWORD`. Se niega a ejecutarse si detecta tablas de aplicación o historial de migraciones; úsala únicamente en una base desechable aislada, nunca en la base persistente.
+
 ## Migración y administrador inicial
 
 La migración del esquema `library` vive en `database/migrations`. En Docker, desde el repositorio de infraestructura, ejecuta:
