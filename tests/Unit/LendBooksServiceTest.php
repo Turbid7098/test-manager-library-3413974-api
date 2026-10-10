@@ -255,6 +255,17 @@ final class FakeUsers implements UserRepository
         return $this->records[strtolower(trim($username))] ?? null;
     }
 
+    public function findById(string $id): ?User
+    {
+        foreach ($this->records as $user) {
+            if ($user->id === $id) {
+                return $user;
+            }
+        }
+
+        return null;
+    }
+
     public function save(User $user): void
     {
         $this->records[$user->username()] = $user;

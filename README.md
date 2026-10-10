@@ -6,7 +6,7 @@ Backend de **Manager Library**, desarrollado con PHP y Laravel para la ficha SEN
 
 El dominio y los casos de uso de P3 están implementados en `src/Domain` y `src/Application`. Sus pruebas con fakes no requieren PostgreSQL ni servidor HTTP.
 
-La migración inicial, el endpoint `GET /api/v1/health` y el comando de aprovisionamiento del administrador están disponibles. Los adaptadores de persistencia, el inicio de sesión HTTP y las demás rutas todavía deben completarse antes de considerar P2/P4 terminadas.
+La migración inicial, `GET /api/v1/health` y el aprovisionamiento del administrador están disponibles. El primer bloque de P4 agrega login HTTP con JWT, verificación Bearer y adaptadores de usuario/hash; se probó contra PostgreSQL en Compose. P2 sigue parcial hasta verificar un arranque desde un volumen vacío. Los adaptadores de persistencia restantes y las rutas de negocio todavía están pendientes.
 
 ## Pruebas del núcleo
 
@@ -32,4 +32,6 @@ docker compose exec api php artisan app:create-admin
 
 El comando de administrador obtiene `ADMIN_USERNAME` y `ADMIN_PASSWORD` del entorno, guarda únicamente el hash y puede ejecutarse de nuevo sin duplicar el usuario. No configures credenciales reales en archivos versionados.
 
-El login HTTP aún no está implementado; por tanto, aprovisionar este usuario no significa que la autenticación por API esté lista.
+En Compose, el servidor Laravel usa `--no-reload` para heredar las variables de entorno del servicio. Esto es necesario porque `artisan serve` filtra variables no incluidas en su lista permitida cuando encuentra un archivo `.env`.
+
+La ruta `POST /api/v1/auth/login` devuelve un JWT Bearer firmado con vigencia de ocho horas. Configura un `JWT_SECRET` aleatorio de al menos 32 bytes, distinto de `APP_KEY`, mediante el entorno; no lo guardes en Git. La ruta health y login son públicas; las rutas operativas deben aplicar el middleware `jwt` y, cuando corresponda, limitar roles, por ejemplo `jwt:admin`.

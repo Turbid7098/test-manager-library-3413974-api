@@ -16,7 +16,7 @@ final class LoginService
     ) {}
 
     /** @return array{access_token: string, token_type: string, expires_in: int, role: string} */
-    public function execute(string $username, string $password): array
+    public function execute(string $username, #[\SensitiveParameter] string $password): array
     {
         $user = $this->users->findByUsername(strtolower(trim($username)));
         if ($user === null || ! $this->passwords->verify($password, $user->passwordHash)) {

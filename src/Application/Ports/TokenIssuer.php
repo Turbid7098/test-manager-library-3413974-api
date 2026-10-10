@@ -6,5 +6,6 @@ use Domain\Entities\User;
 
 interface TokenIssuer
 {
-    public function issueToken(User $user): array; // returns ['access_token' => '...', 'expires_in' => 28800]
+    /** @return array{access_token: string, token_type: string, expires_in: int, role: string} */
+    public function issueToken(User $user): array;
 }
