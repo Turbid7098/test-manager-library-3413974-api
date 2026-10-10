@@ -53,6 +53,29 @@ In order to ensure that the Laravel community is welcoming to all, please review
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
+## Manager Library
+
+Este repositorio contiene la API Laravel del proyecto Manager Library. El nucleo de negocio se organiza en `src/Domain` y `src/Application`; los puertos son interfaces y los casos de uso se prueban sin PostgreSQL ni servidor HTTP.
+
+### Fase P3
+
+La fase P3 cubre objetos de valor, entidades, invariantes y casos de uso para autenticacion, usuarios, libros, socios, prestamos, devoluciones, vencidos, portadas y reporte. Los adaptadores Eloquent, las rutas HTTP y la composicion siguen pendientes para fases posteriores.
+
+Los identificadores se generan mediante el puerto `IdGenerator`; los casos de uso no importan Laravel. El puerto `CoverStorage` documenta que el adaptador debe validar el contenido real de la imagen, no confiar en su extension ni en el tipo declarado.
+
+### Pruebas del nucleo
+
+Requisitos: Docker en ejecucion, `vendor/` instalado y la imagen `php:8.3-cli`.
+
+Desde la raiz de este repositorio, en PowerShell:
+
+```powershell
+$api = (Resolve-Path .).Path
+docker run --rm --mount "type=bind,source=$api,target=/app" --workdir /app php:8.3-cli php vendor/bin/phpunit tests/Unit/LendBooksServiceTest.php
+```
+
+La prueba de P3 usa fakes en memoria. No demuestra persistencia PostgreSQL, contrato HTTP ni concurrencia real; esas evidencias pertenecen a fases posteriores.
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
