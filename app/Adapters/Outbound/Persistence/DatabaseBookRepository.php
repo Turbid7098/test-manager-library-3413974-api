@@ -6,6 +6,7 @@ use Application\DTO\PageResult;
 use Application\Ports\BookRepository;
 use DateTimeImmutable;
 use Domain\Entities\Book;
+use Domain\Exceptions\ConflictException;
 use Domain\ValueObjects\Isbn;
 use Domain\ValueObjects\Quantity;
 use Illuminate\Support\Facades\DB;
@@ -34,19 +35,36 @@ final class DatabaseBookRepository implements BookRepository
 
     public function save(Book $book): void
     {
-        DB::table('library.book')->updateOrInsert(
-            ['id' => $book->id],
-            [
-                'title' => $book->title(),
-                'author' => $book->author(),
-                'isbn' => $book->isbn->value,
-                'category_id' => $book->categoryId(),
-                'total_copies' => $book->totalCopies()->value,
-                'available_copies' => $book->availableCopies()->value,
-                'cover_key' => $book->coverKey(),
-                'deleted_at' => $book->deletedAt()?->format('Y-m-d H:i:s.uP'),
-            ]
-        );
+        $values = [
+            'title' => $book->title(),
+            'author' => $book->author(),
+            'isbn' => $book->isbn->value,
+            'category_id' => $book->categoryId(),
+            'total_copies' => $book->totalCopies()->value,
+            'available_copies' => $book->availableCopies()->value,
+            'cover_key' => $book->coverKey(),
+            'deleted_at' => $book->deletedAt()?->format('Y-m-d H:i:s.uP'),
+        ];
+        $books = DB::table('library.book');
+
+        if (! $books->where('id', $book->id)->exists()) {
+            $books->insert(['id' => $book->id, ...$values, 'version' => 0]);
+
+            return;
+        }
+
+        $updated = $books->where('id', $book->id)
+            ->where('version', $book->version())
+            ->update([...$values, 'version' => DB::raw('version + 1')]);
+
+        if ($updated !== 1) {
+            throw new ConflictException(
+                'El libro cambió mientras se procesaba la operación.',
+                'BOOK_NOT_AVAILABLE'
+            );
+        }
+
+        $book->markPersistedAtVersion($book->version() + 1);
     }
 
     public function findManyByIds(array $ids): array
@@ -111,7 +129,8 @@ final class DatabaseBookRepository implements BookRepository
             new Quantity((int) $record->total_copies),
             new Quantity((int) $record->available_copies),
             $record->cover_key,
-            $record->deleted_at === null ? null : new DateTimeImmutable($record->deleted_at)
+            $record->deleted_at === null ? null : new DateTimeImmutable($record->deleted_at),
+            (int) $record->version
         );
     }
 }

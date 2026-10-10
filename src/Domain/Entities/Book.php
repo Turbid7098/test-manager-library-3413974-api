@@ -26,7 +26,8 @@ class Book
         private Quantity $totalCopies,
         private Quantity $availableCopies,
         private ?string $coverKey = null,
-        private ?DateTimeImmutable $deletedAt = null
+        private ?DateTimeImmutable $deletedAt = null,
+        private int $version = 0
     ) {
         $this->title = trim($title);
         $this->author = trim($author);
@@ -43,6 +44,9 @@ class Book
         }
         if ($this->coverKey === '') {
             throw new ValidationException('La clave de portada no puede estar vacía.');
+        }
+        if ($this->version < 0) {
+            throw new ValidationException('La versión del libro no puede ser negativa.');
         }
     }
 
@@ -79,6 +83,19 @@ class Book
     public function deletedAt(): ?DateTimeImmutable
     {
         return $this->deletedAt;
+    }
+
+    public function version(): int
+    {
+        return $this->version;
+    }
+
+    public function markPersistedAtVersion(int $version): void
+    {
+        if ($version <= $this->version) {
+            throw new ValidationException('La versión persistida debe ser mayor que la versión actual.');
+        }
+        $this->version = $version;
     }
 
     public function withdraw(): void

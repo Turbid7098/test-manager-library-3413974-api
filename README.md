@@ -6,7 +6,7 @@ Backend de **Manager Library**, desarrollado con PHP y Laravel para la ficha SEN
 
 El dominio y los casos de uso de P3 están implementados en `src/Domain` y `src/Application`. Sus pruebas con fakes no requieren PostgreSQL ni servidor HTTP.
 
-La migración inicial, `GET /api/v1/health`, el login HTTP/JWT y los adaptadores PostgreSQL para libros, socios, usuarios y categorías están implementados. Los adaptadores de libros y socios se prueban contra PostgreSQL real con transacciones revertidas. P2 sigue parcial hasta verificar un arranque desde un volumen vacío; el repositorio de préstamos, las rutas de negocio y el contrato HTTP restante todavía están pendientes.
+La migración inicial, `GET /api/v1/health`, el login HTTP/JWT y los adaptadores PostgreSQL para libros, socios, usuarios, categorías y préstamos están implementados. El testigo de versión evita escrituras obsoletas y el checkout se verifica con dos procesos Laravel concurrentes contra PostgreSQL real. P2 sigue parcial hasta verificar un arranque desde un volumen vacío; las rutas HTTP de negocio y el contrato HTTP restante todavía están pendientes.
 
 ## Pruebas del núcleo
 
@@ -25,7 +25,7 @@ Las pruebas de P3 usan fakes en memoria. Las pruebas de `tests/Integration` requ
 docker compose exec api php artisan test --compact
 ```
 
-El conjunto completo incluye pruebas unitarias, HTTP y de integración. No demuestra todavía el contrato completo de todas las rutas ni concurrencia de préstamos.
+El conjunto completo incluye pruebas unitarias, HTTP y de integración. La prueba concurrente de T-13 ejecuta procesos independientes y verifica que solo uno preste el último ejemplar. Aún no se demuestra el contrato HTTP completo de las rutas de negocio.
 
 ## Migración y administrador inicial
 
